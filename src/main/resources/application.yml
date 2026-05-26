@@ -1,0 +1,40 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+pay:
+  environment: ${PAY_ENVIRONMENT:local}
+
+spring:
+  application:
+    name: merchants-core
+  profiles:
+    default: local
+  config:
+    import:
+      - optional:configserver:${CONFIG_SERVER_URL:http://pay-config:8080}
+      - optional:vault://
+  cloud:
+    config:
+      enabled: ${CONFIG_SERVER_ENABLED:false}
+      label: ${CONFIG_SERVER_LABEL:${pay.environment}}
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      kv:
+        backend: ${VAULT_KV_BACKEND:pay}
+        default-context: ""
+        application-name: ${VAULT_KV_CONTEXTS:${pay.environment}/${spring.application.name}-db-password,${pay.environment}/${spring.application.name}-internal-admin-key}
+        profiles: []
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+merchants-core:
+  internal-admin:
+    header-name: ${INTERNAL_ADMIN_API_KEY_HEADER:X-Internal-Admin-Key}
