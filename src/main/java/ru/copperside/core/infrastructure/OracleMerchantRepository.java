@@ -59,7 +59,8 @@ public class OracleMerchantRepository implements MerchantRepository {
                 mp.INITIATOR,
                 mp.CIRCUIT,
                 c.PARAMETERNAME,
-                c.PARAMETERVALUE
+                c.PARAMETERVALUE,
+                c.DATEBEGIN
             FROM merchant_page mp
             LEFT JOIN MERC_CONFIG c
                 ON c.MERCID = mp.MERCID
@@ -208,6 +209,14 @@ public class OracleMerchantRepository implements MerchantRepository {
             if (parameterName != null && parameterValue != null) {
                 acc.configuration.put(parameterName, parameterValue);
             }
+
+            Timestamp dateBegin = (Timestamp) row.get("DATEBEGIN");
+            if (dateBegin != null) {
+                OffsetDateTime begin = toUtc(dateBegin);
+                if (acc.activeSince == null || begin.isBefore(acc.activeSince)) {
+                    acc.activeSince = begin;
+                }
+            }
         }
 
         List<MerchantWithConfigLine> result = new ArrayList<>();
@@ -218,7 +227,8 @@ public class OracleMerchantRepository implements MerchantRepository {
                     acc.hierarchyId,
                     acc.initiator,
                     acc.circuit,
-                    acc.configuration
+                    acc.configuration,
+                    acc.activeSince
             ));
         }
         return result;
@@ -231,6 +241,7 @@ public class OracleMerchantRepository implements MerchantRepository {
         private final String initiator;
         private final String circuit;
         private final LinkedHashMap<String, String> configuration = new LinkedHashMap<>();
+        private OffsetDateTime activeSince;
 
         private MerchantAccumulator(Long mercId, String name, Long hierarchyId, String initiator, String circuit) {
             this.mercId = mercId;

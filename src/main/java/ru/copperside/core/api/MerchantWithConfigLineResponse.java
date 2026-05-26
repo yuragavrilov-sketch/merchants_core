@@ -2,6 +2,7 @@ package ru.copperside.core.api;
 
 import ru.copperside.core.domain.MerchantWithConfigLine;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 public record MerchantWithConfigLineResponse(
@@ -10,7 +11,8 @@ public record MerchantWithConfigLineResponse(
         Long hierarchyId,
         String initiator,
         String circuit,
-        Map<String, String> configuration
+        Map<String, String> configuration,
+        OffsetDateTime activeSince
 ) {
     public static MerchantWithConfigLineResponse from(MerchantWithConfigLine merchant) {
         return new MerchantWithConfigLineResponse(
@@ -19,7 +21,8 @@ public record MerchantWithConfigLineResponse(
                 merchant.hierarchyId(),
                 merchant.initiator(),
                 merchant.circuit(),
-                merchant.configuration()
+                merchant.configuration(),
+                merchant.activeSince()
         );
     }
 }

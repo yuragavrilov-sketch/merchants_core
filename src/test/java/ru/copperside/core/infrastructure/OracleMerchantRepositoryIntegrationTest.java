@@ -48,6 +48,23 @@ class OracleMerchantRepositoryIntegrationTest {
         assertThat(merchants).hasSize(1);
         assertThat(merchants.getFirst().mercId()).isEqualTo(1L);
         assertThat(merchants.getFirst().configuration()).containsEntry("INN", "1111111111");
+        assertThat(merchants.getFirst().activeSince())
+                .isEqualTo(OffsetDateTime.of(1999, 12, 31, 21, 0, 0, 0, ZoneOffset.UTC));
+    }
+
+    @Test
+    void findAllWithActiveConfigLineReturnsNullActiveSinceWhenNoActiveConfig() {
+        var merchants = merchantRepository.findAllWithActiveConfigLine(
+                OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC),
+                PageWindow.of(10, 0),
+                SearchTerm.of("gamma"),
+                SortOrder.of(MerchantSortField.MERC_ID, SortDirection.ASC)
+        );
+
+        assertThat(merchants).hasSize(1);
+        assertThat(merchants.getFirst().mercId()).isEqualTo(3L);
+        assertThat(merchants.getFirst().configuration()).isEmpty();
+        assertThat(merchants.getFirst().activeSince()).isNull();
     }
 
     @Test

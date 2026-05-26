@@ -1,5 +1,6 @@
 package ru.copperside.core.domain;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 public record MerchantWithConfigLine(
@@ -8,6 +9,7 @@ public record MerchantWithConfigLine(
         Long hierarchyId,
         String initiator,
         String circuit,
-        Map<String, String> configuration
+        Map<String, String> configuration,
+        OffsetDateTime activeSince
 ) {
 }
