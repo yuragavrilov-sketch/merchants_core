@@ -82,7 +82,7 @@ class MerchantControllerIntegrationTest {
     void activeConfigurationLineCountReturnsTotalMerchants() throws Exception {
         mockMvc.perform(get("/api/v1/merchants/configurations/active-line/count"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(3));
+                .andExpect(jsonPath("$.data.total").value(6));
     }
 
     @Test

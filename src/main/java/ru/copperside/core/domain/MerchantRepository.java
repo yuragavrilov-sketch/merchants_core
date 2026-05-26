@@ -16,6 +16,14 @@ public interface MerchantRepository {
 
     long countWithActiveConfigLine(SearchTerm search);
 
+    MerchantAdminPage findAdminProjection(
+            OffsetDateTime atMoment,
+            PageWindow page,
+            SearchTerm search,
+            String status,
+            SortOrder<MerchantAdminSortField> sort
+    );
+
     Optional<Merchant> findById(Long mercId);
 
     boolean existsById(Long mercId);

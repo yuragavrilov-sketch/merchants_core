@@ -8,6 +8,9 @@ import ru.copperside.core.domain.MerchantSortField;
 import ru.copperside.core.domain.MerchantWithConfigLine;
 import ru.copperside.core.domain.PageWindow;
 import ru.copperside.core.domain.SearchTerm;
+import ru.copperside.core.domain.MerchantAdminLine;
+import ru.copperside.core.domain.MerchantAdminPage;
+import ru.copperside.core.domain.MerchantAdminSortField;
 import ru.copperside.core.domain.SortOrder;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -19,6 +22,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,6 +48,64 @@ public class OracleMerchantRepository implements MerchantRepository {
             WHERE MERCID = :mercId
             ORDER BY DATEBEGIN, DATEEND, PARAMETERNAME
             """;
+
+    private static final String ADMIN_PROJECTION_CTE = """
+            WITH active_cfg AS (
+                SELECT c.MERCID,
+                       MIN(c.DATEBEGIN) AS CREATED_AT,
+                       COUNT(*) AS CFG_COUNT,
+                       MAX(CASE WHEN LOWER(c.PARAMETERNAME) = 'status'
+                                THEN LOWER(c.PARAMETERVALUE) END) AS EXPLICIT_STATUS,
+                       MAX(CASE WHEN LOWER(c.PARAMETERNAME) IN
+                                     ('ecomallowed','directecomallow','onlineecomenabled',
+                                      'onlinep2penabled','p2pdebitallowed','p2pcreditallowed')
+                                 AND LOWER(TRIM(c.PARAMETERVALUE)) IN ('0','false','no','n','disabled')
+                                THEN 1 ELSE 0 END) AS ANY_DISABLED
+                FROM MERC_CONFIG c
+                WHERE :atMoment >= c.DATEBEGIN AND :atMoment < c.DATEEND
+                GROUP BY c.MERCID
+            ),
+            mcc_pick AS (
+                SELECT MERCID, MCC FROM (
+                    SELECT c.MERCID, c.PARAMETERVALUE AS MCC,
+                           ROW_NUMBER() OVER (PARTITION BY c.MERCID ORDER BY c.PARAMETERNAME) AS RN
+                    FROM MERC_CONFIG c
+                    WHERE :atMoment >= c.DATEBEGIN AND :atMoment < c.DATEEND
+                      AND LOWER(c.PARAMETERNAME) IN ('mcc','merchant_mcc','merchantcategorycode')
+                      AND LENGTH(c.PARAMETERVALUE) = 4
+                      AND TRANSLATE(c.PARAMETERVALUE, '0123456789', '0000000000') = '0000'
+                )
+                WHERE RN = 1
+            ),
+            proj AS (
+                SELECT m.MERCID,
+                       m.NAME,
+                       CASE
+                           WHEN ac.MERCID IS NULL OR ac.CFG_COUNT = 0 THEN 'blocked'
+                           WHEN ac.EXPLICIT_STATUS = 'blocked' THEN 'blocked'
+                           WHEN ac.EXPLICIT_STATUS = 'suspended' THEN 'suspended'
+                           WHEN ac.ANY_DISABLED = 1 THEN 'suspended'
+                           ELSE 'active'
+                       END AS STATUS,
+                       COALESCE(mp.MCC, '0000') AS MCC,
+                       ac.CREATED_AT
+                FROM "AP#MERCHANTS" m
+                LEFT JOIN active_cfg ac ON ac.MERCID = m.MERCID
+                LEFT JOIN mcc_pick mp ON mp.MERCID = m.MERCID
+            )
+            SELECT p.MERCID, p.NAME, p.STATUS, p.MCC, p.CREATED_AT, COUNT(*) OVER () AS TOTAL_COUNT
+            FROM proj p
+            WHERE (:status IS NULL OR p.STATUS = :status)
+              AND (:search IS NULL OR (
+                    LOWER('MRC-' || LPAD(TO_CHAR(p.MERCID), 5, '0')) LIKE :search
+                    OR LOWER(p.NAME) LIKE :search
+                    OR p.STATUS LIKE :search
+                    OR p.MCC LIKE :search
+              ))
+            """;
+
+    private static final String ADMIN_PROJECTION_TAIL =
+            " OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY";
 
     private static final String ACTIVE_LINE_MERCHANT_PAGE_CTE = """
             WITH merchant_page AS (
@@ -127,6 +189,52 @@ public class OracleMerchantRepository implements MerchantRepository {
         addSearchParam(params, search);
         Long count = jdbcTemplate.queryForObject(sql, params, Long.class);
         return count == null ? 0L : count;
+    }
+
+    @Override
+    public MerchantAdminPage findAdminProjection(
+            OffsetDateTime atMoment,
+            PageWindow page,
+            SearchTerm search,
+            String status,
+            SortOrder<MerchantAdminSortField> sort
+    ) {
+        String sql = ADMIN_PROJECTION_CTE
+                + " ORDER BY " + adminSortColumn(sort.field()) + " " + sort.direction().name()
+                + ADMIN_PROJECTION_TAIL;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("atMoment", Timestamp.from(atMoment.toInstant()))
+                .addValue("limit", page.limit())
+                .addValue("offset", page.offset())
+                .addValue("status", (status == null || status.isBlank())
+                        ? null : status.trim().toLowerCase(Locale.ROOT))
+                .addValue("search", search.likePattern());
+
+        long[] total = {0L};
+        List<MerchantAdminLine> lines = jdbcTemplate.query(sql, params, (rs, rowNum) -> {
+            total[0] = rs.getLong("TOTAL_COUNT");
+            Timestamp createdAt = rs.getTimestamp("CREATED_AT");
+            return new MerchantAdminLine(
+                    rs.getLong("MERCID"),
+                    rs.getString("NAME"),
+                    rs.getString("STATUS"),
+                    rs.getString("MCC"),
+                    createdAt == null ? null : toUtc(createdAt)
+            );
+        });
+
+        return new MerchantAdminPage(lines, lines.isEmpty() ? 0L : total[0]);
+    }
+
+    private String adminSortColumn(MerchantAdminSortField sortBy) {
+        return switch (sortBy) {
+            case MERC_ID -> "p.MERCID";
+            case NAME -> "p.NAME";
+            case STATUS -> "p.STATUS";
+            case MCC -> "p.MCC";
+            case CREATED_AT -> "p.CREATED_AT";
+        };
     }
 
     @Override

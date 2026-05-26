@@ -6,6 +6,8 @@ import ru.copperside.core.domain.MerchantConfigSnapshotSortField;
 import ru.copperside.core.domain.MerchantConfigSortField;
 import ru.copperside.core.domain.MerchantRepository;
 import ru.copperside.core.domain.MerchantSortField;
+import ru.copperside.core.domain.MerchantAdminPage;
+import ru.copperside.core.domain.MerchantAdminSortField;
 import ru.copperside.core.domain.MerchantWithConfigLine;
 import ru.copperside.core.domain.PageWindow;
 import ru.copperside.core.domain.SearchTerm;
@@ -101,6 +103,17 @@ class MerchantServiceSnapshotTest {
                 SortOrder<MerchantConfigSortField> sort
         ) {
             return List.of();
+        }
+
+        @Override
+        public MerchantAdminPage findAdminProjection(
+                OffsetDateTime atMoment,
+                PageWindow page,
+                SearchTerm search,
+                String status,
+                SortOrder<MerchantAdminSortField> sort
+        ) {
+            return new MerchantAdminPage(List.of(), 0L);
         }
 
         @Override
