@@ -14,6 +14,8 @@ public interface MerchantRepository {
             SortOrder<MerchantSortField> sort
     );
 
+    long countWithActiveConfigLine(SearchTerm search);
+
     Optional<Merchant> findById(Long mercId);
 
     boolean existsById(Long mercId);

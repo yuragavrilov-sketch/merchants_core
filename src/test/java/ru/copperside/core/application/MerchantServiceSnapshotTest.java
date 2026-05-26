@@ -78,6 +78,11 @@ class MerchantServiceSnapshotTest {
         }
 
         @Override
+        public long countWithActiveConfigLine(SearchTerm search) {
+            return 0L;
+        }
+
+        @Override
         public Optional<Merchant> findById(Long mercId) {
             return Optional.empty();
         }

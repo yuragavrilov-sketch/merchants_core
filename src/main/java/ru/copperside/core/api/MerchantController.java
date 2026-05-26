@@ -88,6 +88,16 @@ public class MerchantController {
         return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null));
     }
 
+    @GetMapping("/configurations/active-line/count")
+    @Operation(summary = "Count merchants with active configuration line for Admin BFF")
+    public ApiResponse<CountResponse> countWithActiveConfigurationLine(
+            @Parameter(description = "Search in merchant fields (name/initiator/circuit/id)")
+            @RequestParam(required = false) String search
+    ) {
+        long total = merchantService.countWithActiveConfigLine(SearchTerm.of(search));
+        return ApiResponse.success(new CountResponse(total));
+    }
+
     @GetMapping("/{merchantId}")
     @Operation(summary = "Get merchant by id")
     public ApiResponse<MerchantResponse> getById(@Parameter(description = "Merchant identifier") @PathVariable Long merchantId) {

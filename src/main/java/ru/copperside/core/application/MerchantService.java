@@ -50,6 +50,10 @@ public class MerchantService {
         return merchantRepository.findAllWithActiveConfigLine(atMoment, page, search, sort);
     }
 
+    public long countWithActiveConfigLine(SearchTerm search) {
+        return merchantRepository.countWithActiveConfigLine(search);
+    }
+
     public Merchant getById(Long merchantId) {
         return merchantRepository.findById(merchantId)
                 .orElseThrow(() -> new MerchantNotFoundException(merchantId));

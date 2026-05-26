@@ -79,6 +79,21 @@ class MerchantControllerIntegrationTest {
     }
 
     @Test
+    void activeConfigurationLineCountReturnsTotalMerchants() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/configurations/active-line/count"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(3));
+    }
+
+    @Test
+    void activeConfigurationLineCountAppliesSearch() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/configurations/active-line/count")
+                        .param("search", "market"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1));
+    }
+
+    @Test
     void configurationHistoryEndpointSupportsPaginationAndSorting() throws Exception {
         mockMvc.perform(get("/api/v1/merchants/1/configuration-history")
                         .param("limit", "1")

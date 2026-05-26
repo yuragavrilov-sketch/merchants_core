@@ -121,6 +121,15 @@ public class OracleMerchantRepository implements MerchantRepository {
     }
 
     @Override
+    public long countWithActiveConfigLine(SearchTerm search) {
+        String sql = "SELECT COUNT(*) FROM \"AP#MERCHANTS\" m" + merchantSearchWhereClause(search);
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        addSearchParam(params, search);
+        Long count = jdbcTemplate.queryForObject(sql, params, Long.class);
+        return count == null ? 0L : count;
+    }
+
+    @Override
     public Optional<Merchant> findById(Long mercId) {
         String sql = MERCHANTS_SELECT + " WHERE m.MERCID = :mercId";
         List<Merchant> merchants = jdbcTemplate.query(

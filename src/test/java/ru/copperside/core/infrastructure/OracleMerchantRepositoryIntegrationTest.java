@@ -68,6 +68,18 @@ class OracleMerchantRepositoryIntegrationTest {
     }
 
     @Test
+    void countWithActiveConfigLineCountsAllMerchantsWhenNoSearch() {
+        long total = merchantRepository.countWithActiveConfigLine(SearchTerm.of(null));
+        assertThat(total).isEqualTo(3L);
+    }
+
+    @Test
+    void countWithActiveConfigLineAppliesMerchantSearch() {
+        assertThat(merchantRepository.countWithActiveConfigLine(SearchTerm.of("market"))).isEqualTo(1L);
+        assertThat(merchantRepository.countWithActiveConfigLine(SearchTerm.of("zzz-no-match"))).isEqualTo(0L);
+    }
+
+    @Test
     void findConfigByMerchantIdAtSupportsPaginationSearchAndSorting() {
         var configs = merchantRepository.findConfigByMerchantIdAt(
                 1L,
