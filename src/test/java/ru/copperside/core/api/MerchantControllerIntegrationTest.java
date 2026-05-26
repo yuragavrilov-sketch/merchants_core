@@ -103,4 +103,48 @@ class MerchantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1));
     }
+
+    @Test
+    void adminListReturnsDerivedProjectionWithTotal() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list")
+                        .param("limit", "100").param("offset", "0").param("sortBy", "mercId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").value(6))
+                .andExpect(jsonPath("$.data.length()").value(6))
+                .andExpect(jsonPath("$.data[3].mercId").value(4))
+                .andExpect(jsonPath("$.data[3].status").value("active"))
+                .andExpect(jsonPath("$.data[3].mcc").value("5411"))
+                .andExpect(jsonPath("$.data[5].status").value("blocked"))
+                .andExpect(jsonPath("$.data[5].mcc").value("0000"));
+    }
+
+    @Test
+    void adminListFiltersByStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list").param("status", "active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").value(3))
+                .andExpect(jsonPath("$.meta.status").value("active"))
+                .andExpect(jsonPath("$.data[0].status").value("active"));
+    }
+
+    @Test
+    void adminListSupportsSearch() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list").param("search", "5411"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").value(1))
+                .andExpect(jsonPath("$.data[0].mercId").value(4));
+    }
+
+    @Test
+    void plainMerchantsListDoesNotExposeTotalInMeta() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants").param("limit", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").doesNotExist());
+    }
+
+    @Test
+    void adminListRejectsUnknownSortBy() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list").param("sortBy", "bogusField"))
+                .andExpect(status().isBadRequest());
+    }
 }

@@ -55,7 +55,7 @@ public class InternalAdminMerchantController {
                 .map(MerchantResponse::from)
                 .toList();
 
-        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null));
+        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null, null, null));
     }
 
     @GetMapping("/{merchantId}")

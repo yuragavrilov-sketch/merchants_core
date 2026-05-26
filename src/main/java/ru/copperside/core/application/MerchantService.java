@@ -3,6 +3,8 @@ package ru.copperside.core.application;
 import ru.copperside.core.domain.Merchant;
 import ru.copperside.core.domain.MerchantConfigEntry;
 import ru.copperside.core.domain.MerchantConfigSortField;
+import ru.copperside.core.domain.MerchantAdminPage;
+import ru.copperside.core.domain.MerchantAdminSortField;
 import ru.copperside.core.domain.MerchantConfigSnapshot;
 import ru.copperside.core.domain.MerchantConfigSnapshotSortField;
 import ru.copperside.core.domain.MerchantRepository;
@@ -52,6 +54,16 @@ public class MerchantService {
 
     public long countWithActiveConfigLine(SearchTerm search) {
         return merchantRepository.countWithActiveConfigLine(search);
+    }
+
+    public MerchantAdminPage getAdminProjection(
+            PageWindow page,
+            SearchTerm search,
+            String status,
+            SortOrder<MerchantAdminSortField> sort
+    ) {
+        OffsetDateTime atMoment = OffsetDateTime.now(clock).withOffsetSameInstant(ZoneOffset.UTC);
+        return merchantRepository.findAdminProjection(atMoment, page, search, status, sort);
     }
 
     public Merchant getById(Long merchantId) {

@@ -2,6 +2,8 @@ package ru.copperside.core.api;
 
 import ru.copperside.core.application.MerchantService;
 import ru.copperside.core.domain.Merchant;
+import ru.copperside.core.domain.MerchantAdminPage;
+import ru.copperside.core.domain.MerchantAdminSortField;
 import ru.copperside.core.domain.MerchantConfigSnapshotSortField;
 import ru.copperside.core.domain.MerchantConfigSortField;
 import ru.copperside.core.domain.MerchantSortField;
@@ -60,7 +62,7 @@ public class MerchantController {
                 .map(MerchantResponse::from)
                 .toList();
 
-        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null));
+        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null, null, null));
     }
 
     @GetMapping("/configurations/active-line")
@@ -85,7 +87,41 @@ public class MerchantController {
                 .map(MerchantWithConfigLineResponse::from)
                 .toList();
 
-        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null));
+        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null, null, null));
+    }
+
+    @GetMapping("/admin-list")
+    @Operation(summary = "Get merchants admin projection (derived status/mcc/createdAt) for Admin BFF")
+    public ApiResponse<List<MerchantAdminLineResponse>> getAdminList(
+            @Parameter(description = "Page size (>0)")
+            @RequestParam(defaultValue = "100") @Min(1) @Max(PageWindow.MAX_LIMIT) int limit,
+            @Parameter(description = "Page offset (>=0)")
+            @RequestParam(defaultValue = "0") @Min(0) int offset,
+            @Parameter(description = "Search in formatted id, name, derived status and mcc")
+            @RequestParam(required = false) String search,
+            @Parameter(description = "Filter by derived status: active|suspended|blocked")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Sort field: mercId|name|status|mcc|createdAt")
+            @RequestParam(defaultValue = "mercId") String sortBy,
+            @Parameter(description = "Sort direction: asc|desc")
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        String normalizedStatus = (status == null || status.isBlank())
+                ? null : status.trim().toLowerCase(java.util.Locale.ROOT);
+        MerchantAdminSortField sortField = MerchantAdminSortField.from(sortBy);
+        MerchantAdminPage page = merchantService.getAdminProjection(
+                PageWindow.of(limit, offset),
+                SearchTerm.of(search),
+                normalizedStatus,
+                SortOrder.of(sortField, SortDirection.from(sortDir))
+        );
+
+        List<MerchantAdminLineResponse> data = page.lines().stream()
+                .map(MerchantAdminLineResponse::from)
+                .toList();
+
+        return ApiResponse.success(data,
+                new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null, page.total(), normalizedStatus));
     }
 
     @GetMapping("/configurations/active-line/count")
@@ -136,7 +172,7 @@ public class MerchantController {
                 .map(MerchantConfigEntryResponse::from)
                 .toList();
 
-        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, atMoment.toString()));
+        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, atMoment.toString(), null, null));
     }
 
     @GetMapping("/{merchantId}/configuration-history")
@@ -164,6 +200,6 @@ public class MerchantController {
                 .map(MerchantConfigSnapshotResponse::from)
                 .toList();
 
-        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null));
+        return ApiResponse.success(data, new ApiMeta(limit, offset, data.size(), search, sortBy, sortDir, null, null, null));
     }
 }
