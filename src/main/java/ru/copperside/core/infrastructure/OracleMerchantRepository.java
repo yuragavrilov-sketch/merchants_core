@@ -77,6 +77,16 @@ public class OracleMerchantRepository implements MerchantRepository {
                 )
                 WHERE RN = 1
             ),
+            inn_pick AS (
+                SELECT MERCID, INN FROM (
+                    SELECT c.MERCID, c.PARAMETERVALUE AS INN,
+                           ROW_NUMBER() OVER (PARTITION BY c.MERCID ORDER BY c.PARAMETERNAME) AS RN
+                    FROM MERC_CONFIG c
+                    WHERE :atMoment >= c.DATEBEGIN AND :atMoment < c.DATEEND
+                      AND LOWER(c.PARAMETERNAME) = 'inn'
+                )
+                WHERE RN = 1
+            ),
             proj AS (
                 SELECT m.MERCID,
                        m.NAME,
@@ -88,12 +98,14 @@ public class OracleMerchantRepository implements MerchantRepository {
                            ELSE 'active'
                        END AS STATUS,
                        COALESCE(mp.MCC, '0000') AS MCC,
+                       ip.INN AS INN,
                        ac.CREATED_AT
                 FROM "AP#MERCHANTS" m
                 LEFT JOIN active_cfg ac ON ac.MERCID = m.MERCID
                 LEFT JOIN mcc_pick mp ON mp.MERCID = m.MERCID
+                LEFT JOIN inn_pick ip ON ip.MERCID = m.MERCID
             )
-            SELECT p.MERCID, p.NAME, p.STATUS, p.MCC, p.CREATED_AT, COUNT(*) OVER () AS TOTAL_COUNT
+            SELECT p.MERCID, p.NAME, p.STATUS, p.MCC, p.INN, p.CREATED_AT, COUNT(*) OVER () AS TOTAL_COUNT
             FROM proj p
             WHERE (:status IS NULL OR p.STATUS = :status)
               AND (:search IS NULL OR (
@@ -101,6 +113,7 @@ public class OracleMerchantRepository implements MerchantRepository {
                     OR LOWER(p.NAME) LIKE :search
                     OR p.STATUS LIKE :search
                     OR p.MCC LIKE :search
+                    OR p.INN LIKE :search
               ))
             """;
 
@@ -200,7 +213,7 @@ public class OracleMerchantRepository implements MerchantRepository {
             SortOrder<MerchantAdminSortField> sort
     ) {
         String sql = ADMIN_PROJECTION_CTE
-                + " ORDER BY " + adminSortColumn(sort.field()) + " " + sort.direction().name()
+                + " ORDER BY " + adminSortColumn(sort.field()) + " " + sort.direction().name() + " NULLS LAST"
                 + ADMIN_PROJECTION_TAIL;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -220,6 +233,7 @@ public class OracleMerchantRepository implements MerchantRepository {
                     rs.getString("NAME"),
                     rs.getString("STATUS"),
                     rs.getString("MCC"),
+                    rs.getString("INN"),
                     createdAt == null ? null : toUtc(createdAt)
             );
         });
@@ -233,6 +247,7 @@ public class OracleMerchantRepository implements MerchantRepository {
             case NAME -> "p.NAME";
             case STATUS -> "p.STATUS";
             case MCC -> "p.MCC";
+            case INN -> "p.INN";
             case CREATED_AT -> "p.CREATED_AT";
         };
     }

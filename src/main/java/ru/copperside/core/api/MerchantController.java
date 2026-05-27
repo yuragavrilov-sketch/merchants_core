@@ -101,7 +101,7 @@ public class MerchantController {
             @RequestParam(required = false) String search,
             @Parameter(description = "Filter by derived status: active|suspended|blocked")
             @RequestParam(required = false) String status,
-            @Parameter(description = "Sort field: mercId|name|status|mcc|createdAt")
+            @Parameter(description = "Sort field: mercId|name|status|mcc|inn|createdAt")
             @RequestParam(defaultValue = "mercId") String sortBy,
             @Parameter(description = "Sort direction: asc|desc")
             @RequestParam(defaultValue = "asc") String sortDir

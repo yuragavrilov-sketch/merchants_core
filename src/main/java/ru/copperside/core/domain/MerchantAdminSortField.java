@@ -7,6 +7,7 @@ public enum MerchantAdminSortField {
     NAME,
     STATUS,
     MCC,
+    INN,
     CREATED_AT;
 
     public static MerchantAdminSortField from(String value) {
@@ -18,6 +19,7 @@ public enum MerchantAdminSortField {
             case "name" -> NAME;
             case "status" -> STATUS;
             case "mcc" -> MCC;
+            case "inn" -> INN;
             case "createdat", "created_at" -> CREATED_AT;
             default -> throw new IllegalArgumentException("Unsupported sortBy for admin list: " + value);
         };

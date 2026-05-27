@@ -115,7 +115,9 @@ class MerchantControllerIntegrationTest {
                 .andExpect(jsonPath("$.data[3].status").value("active"))
                 .andExpect(jsonPath("$.data[3].mcc").value("5411"))
                 .andExpect(jsonPath("$.data[5].status").value("blocked"))
-                .andExpect(jsonPath("$.data[5].mcc").value("0000"));
+                .andExpect(jsonPath("$.data[5].mcc").value("0000"))
+                .andExpect(jsonPath("$.data[0].inn").value("1111111111"))
+                .andExpect(jsonPath("$.data[1].inn").value("2222222222"));
     }
 
     @Test
@@ -133,6 +135,24 @@ class MerchantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.total").value(1))
                 .andExpect(jsonPath("$.data[0].mercId").value(4));
+    }
+
+    @Test
+    void adminListSupportsSearchByInn() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list").param("search", "2222222222"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").value(1))
+                .andExpect(jsonPath("$.data[0].mercId").value(2))
+                .andExpect(jsonPath("$.data[0].inn").value("2222222222"));
+    }
+
+    @Test
+    void adminListSortsByInn() throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list")
+                        .param("sortBy", "inn").param("sortDir", "asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].inn").value("1111111111"))
+                .andExpect(jsonPath("$.data[1].inn").value("2222222222"));
     }
 
     @Test
