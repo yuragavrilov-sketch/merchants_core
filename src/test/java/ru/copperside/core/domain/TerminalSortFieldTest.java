@@ -16,15 +16,19 @@ class TerminalSortFieldTest {
 
     @Test
     void mapsKnownAliases() {
+        assertThat(TerminalSortField.from("mercid")).isEqualTo(TerminalSortField.MERC_ID);
+        assertThat(TerminalSortField.from("merc_id")).isEqualTo(TerminalSortField.MERC_ID);
         assertThat(TerminalSortField.from("mps")).isEqualTo(TerminalSortField.MPS);
         assertThat(TerminalSortField.from("GATE")).isEqualTo(TerminalSortField.GATE);
         assertThat(TerminalSortField.from("terminalId")).isEqualTo(TerminalSortField.TERMINAL_ID);
+        assertThat(TerminalSortField.from("terminal_id")).isEqualTo(TerminalSortField.TERMINAL_ID);
         assertThat(TerminalSortField.from("mcc")).isEqualTo(TerminalSortField.MCC);
     }
 
     @Test
     void rejectsUnknown() {
         assertThatThrownBy(() -> TerminalSortField.from("bogus"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("bogus");
     }
 }
