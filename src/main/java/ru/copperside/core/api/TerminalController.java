@@ -42,6 +42,7 @@ public class TerminalController {
             @RequestParam(required = false) String search,
             @Parameter(description = "Sort field: mercId|mps|gate|terminalId|mcc")
             @RequestParam(defaultValue = "mercId") String sortBy,
+            @Parameter(description = "Sort direction: asc|desc")
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         TerminalPage page = terminalService.getAll(
@@ -56,11 +57,15 @@ public class TerminalController {
     @GetMapping("/merchants/{merchantId}/terminals")
     @Operation(summary = "List a merchant's terminal settings (password masked)")
     public ApiResponse<List<TerminalResponse>> getByMerchant(
+            @Parameter(description = "Merchant identifier")
             @PathVariable Long merchantId,
             @RequestParam(defaultValue = "100") @Min(1) @Max(PageWindow.MAX_LIMIT) int limit,
             @RequestParam(defaultValue = "0") @Min(0) int offset,
+            @Parameter(description = "Search in mercId/mps/gate/terminalId/merchantId/mcc/name/merchant name")
             @RequestParam(required = false) String search,
+            @Parameter(description = "Sort field: mercId|mps|gate|terminalId|mcc")
             @RequestParam(defaultValue = "mercId") String sortBy,
+            @Parameter(description = "Sort direction: asc|desc")
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         TerminalPage page = terminalService.getByMerchant(
