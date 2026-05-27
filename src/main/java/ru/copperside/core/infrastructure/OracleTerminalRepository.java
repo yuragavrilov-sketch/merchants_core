@@ -58,7 +58,7 @@ public class OracleTerminalRepository implements TerminalRepository {
                 + "     OR LOWER(m.NAME) LIKE :search"
                 + "   ))"
                 + " ORDER BY " + sortColumn(sort.field()) + " " + sort.direction().name() + " NULLS LAST,"
-                + "          t.MERCID, t.MPS, t.GATE, t.TERMINALID"
+                + "          t.MERCID, t.TERMINALID, t.MPS, t.GATE"
                 + " OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
