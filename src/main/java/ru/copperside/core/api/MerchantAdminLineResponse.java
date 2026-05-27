@@ -9,10 +9,11 @@ public record MerchantAdminLineResponse(
         String name,
         String status,
         String mcc,
+        String inn,
         OffsetDateTime createdAt
 ) {
     public static MerchantAdminLineResponse from(MerchantAdminLine line) {
         return new MerchantAdminLineResponse(
-                line.mercId(), line.name(), line.status(), line.mcc(), line.createdAt());
+                line.mercId(), line.name(), line.status(), line.mcc(), line.inn(), line.createdAt());
     }
 }

@@ -113,6 +113,14 @@ class OracleMerchantRepositoryIntegrationTest {
                         "4:active:5411",
                         "5:suspended:4111",
                         "6:blocked:0000");
+        assertThat(page.lines()).extracting(l -> l.mercId() + ":" + l.inn())
+                .containsExactly(
+                        "1:1111111111",
+                        "2:2222222222",
+                        "3:null",
+                        "4:null",
+                        "5:null",
+                        "6:null");
         assertThat(page.lines().get(3).createdAt())
                 .isEqualTo(OffsetDateTime.of(2017, 12, 31, 21, 0, 0, 0, ZoneOffset.UTC));
         assertThat(page.lines().get(2).createdAt()).isNull();
@@ -149,6 +157,24 @@ class OracleMerchantRepositoryIntegrationTest {
                 AT, PageWindow.of(100, 0), SearchTerm.of("suspended"), null,
                 SortOrder.of(MerchantAdminSortField.MERC_ID, SortDirection.ASC)).lines())
                 .extracting(l -> l.mercId()).containsExactly(5L);
+    }
+
+    @Test
+    void adminProjectionSearchMatchesInn() {
+        assertThat(merchantRepository.findAdminProjection(
+                AT, PageWindow.of(100, 0), SearchTerm.of("2222222222"), null,
+                SortOrder.of(MerchantAdminSortField.MERC_ID, SortDirection.ASC)).lines())
+                .extracting(l -> l.mercId()).containsExactly(2L);
+    }
+
+    @Test
+    void adminProjectionSortsByInnNullsLast() {
+        MerchantAdminPage byInnAsc = merchantRepository.findAdminProjection(
+                AT, PageWindow.of(100, 0), SearchTerm.of(null), null,
+                SortOrder.of(MerchantAdminSortField.INN, SortDirection.ASC));
+        assertThat(byInnAsc.lines().get(0).inn()).isEqualTo("1111111111");
+        assertThat(byInnAsc.lines().get(1).inn()).isEqualTo("2222222222");
+        assertThat(byInnAsc.lines().get(2).inn()).isNull();
     }
 
     @Test
