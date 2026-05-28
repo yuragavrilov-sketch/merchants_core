@@ -41,6 +41,19 @@ No `bootstrap.yml` is used.
 
 ## Run
 
+### Docker Compose contour
+
+The full local contour is owned by [`../infra/docker-compose.yaml`](../infra/docker-compose.yaml).
+
+```powershell
+cd ..\infra
+docker compose up -d --build merchants-core
+```
+
+The container uses `SPRING_PROFILES_ACTIVE=compose`, Config Server label
+`compose`, Oracle at `oracle:1521`, and Vault secrets under
+`pay/compose/merchants-core-*`.
+
 ### Локальный dev-стек
 
 Локальный Oracle, Postgres, Keycloak, Redis и toolbox поднимаются через [`../infra/docker-compose.yaml`](../infra/docker-compose.yaml) (это общий dev-стек на весь NEW_PAY).
