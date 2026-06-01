@@ -82,7 +82,7 @@ mvn spring-boot:run
 $env:PAY_ENVIRONMENT='local'
 $env:CONFIG_SERVER_ENABLED='true'
 $env:VAULT_ENABLED='true'
-$env:CONFIG_SERVER_URL='http://pay-config:8080'
+$env:CONFIG_SERVER_URL='http://pay-payconfig-server:8080'
 $env:SPRING_CLOUD_VAULT_TOKEN='dev-vault-token'
 mvn spring-boot:run
 ```

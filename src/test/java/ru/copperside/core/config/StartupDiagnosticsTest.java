@@ -18,7 +18,7 @@ class StartupDiagnosticsTest {
                 .withProperty("spring.profiles.active", "local")
                 .withProperty(
                         "spring.config.import",
-                        "optional:configserver:http://config-server:8080,optional:vault://"
+                        "optional:configserver:http://pay-payconfig-server:8080,optional:vault://"
                 )
                 .withProperty("spring.datasource.url", "jdbc:oracle:thin:@localhost:1521/XEPDB1")
                 .withProperty("spring.datasource.hikari.maximum-pool-size", "7");
