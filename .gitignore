@@ -1,4 +1,5 @@
 target/
+deploy/
 .mvn/wrapper/maven-wrapper.jar
 
 *.class
