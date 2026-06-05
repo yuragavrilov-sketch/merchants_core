@@ -101,6 +101,15 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Pin the JVM timezone so OffsetDateTime-based assertions match regardless of the
+                         CI host TZ (UTC). Mirrors the runtime ENTRYPOINT -Duser.timezone=GMT+3. -->
+                    <argLine>-Duser.timezone=GMT+3</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>

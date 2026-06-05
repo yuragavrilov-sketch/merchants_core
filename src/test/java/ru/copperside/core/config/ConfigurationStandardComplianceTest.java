@@ -38,7 +38,7 @@ class ConfigurationStandardComplianceTest {
                 .contains("label: ${CONFIG_SERVER_LABEL:${pay.environment}}")
                 .contains("backend: ${VAULT_KV_BACKEND:pay}")
                 .contains("${pay.environment}/${spring.application.name}-db-password")
-                .contains("${pay.environment}/${spring.application.name}-internal-admin-key")
+                .contains("${pay.environment}/sbp-router-admin-key")
                 .doesNotContain("ORACLE_DB_PASSWORD")
                 .doesNotContain("spring-cloud-starter-bootstrap");
     }
