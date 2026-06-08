@@ -18,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -25,6 +26,11 @@ import java.util.UUID;
 public class InternalAdminApiKeyFilter extends OncePerRequestFilter {
 
     private static final String TYPE_BASE = "https://contracts.newpay/errors/";
+
+    /** MDC-ключ для идентичности вызывающего сервиса (виден в логах). */
+    static final String CALLER_MDC_KEY = "caller";
+    /** Имя для совпадения по legacy общему ключу (dual-accept на время миграции). */
+    static final String LEGACY_CALLER = "legacy-shared-key";
 
     private final InternalAdminSecurityProperties properties;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -44,21 +50,48 @@ public class InternalAdminApiKeyFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        if (matchesConfiguredKey(request.getHeader(properties.headerName()))) {
-            filterChain.doFilter(request, response);
+        String caller = resolveCaller(request.getHeader(properties.headerName()));
+        if (caller == null) {
+            writeUnauthorized(response);
             return;
         }
 
-        writeUnauthorized(response);
+        MDC.put(CALLER_MDC_KEY, caller);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove(CALLER_MDC_KEY);
+        }
     }
 
-    private boolean matchesConfiguredKey(String provided) {
+    /**
+     * Возвращает имя совпавшего caller'а (или {@link #LEGACY_CALLER} для legacy-ключа), либо
+     * {@code null}, если ключ отсутствует/не совпал. Идентичность выводится из того, какой ключ
+     * совпал, а не из произвольного заголовка. Перебираем все ключи без раннего выхода, чтобы не
+     * давать timing-сигнал о номере совпавшего ключа.
+     */
+    private String resolveCaller(String provided) {
         if (provided == null || provided.isBlank()) {
+            return null;
+        }
+        byte[] providedBytes = provided.getBytes(StandardCharsets.UTF_8);
+        String match = null;
+        for (Map.Entry<String, String> entry : properties.acceptedCallers().entrySet()) {
+            if (keyMatches(entry.getValue(), providedBytes)) {
+                match = entry.getKey();
+            }
+        }
+        if (properties.hasLegacyKey() && keyMatches(properties.apiKey(), providedBytes) && match == null) {
+            match = LEGACY_CALLER;
+        }
+        return match;
+    }
+
+    private boolean keyMatches(String configured, byte[] providedBytes) {
+        if (configured == null || configured.isBlank()) {
             return false;
         }
-        byte[] expectedBytes = properties.apiKey().getBytes(StandardCharsets.UTF_8);
-        byte[] providedBytes = provided.getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(expectedBytes, providedBytes);
+        return MessageDigest.isEqual(configured.getBytes(StandardCharsets.UTF_8), providedBytes);
     }
 
     private void writeUnauthorized(HttpServletResponse response) throws IOException {

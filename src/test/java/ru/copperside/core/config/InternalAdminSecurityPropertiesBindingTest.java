@@ -31,6 +31,37 @@ class InternalAdminSecurityPropertiesBindingTest {
     }
 
     @Test
+    void bindsAcceptedCallersAndEnablesWithoutLegacyKey() {
+        contextRunner
+                .withPropertyValues(
+                        "merchants-core.internal-admin.header-name=X-Internal-Admin-Key",
+                        "merchants-core.internal-admin.accepted-callers.payadmin-bff=caller-secret"
+                )
+                .run(context -> {
+                    InternalAdminSecurityProperties properties = context.getBean(InternalAdminSecurityProperties.class);
+
+                    assertThat(properties.acceptedCallers()).containsEntry("payadmin-bff", "caller-secret");
+                    assertThat(properties.hasLegacyKey()).isFalse();
+                    assertThat(properties.enabled()).isTrue();
+                });
+    }
+
+    @Test
+    void disabledWhenOnlyBlankKeysConfigured() {
+        contextRunner
+                .withPropertyValues(
+                        "merchants-core.internal-admin.header-name=X-Internal-Admin-Key",
+                        "merchants-core.internal-admin.api-key=",
+                        "merchants-core.internal-admin.accepted-callers.payadmin-bff="
+                )
+                .run(context -> {
+                    InternalAdminSecurityProperties properties = context.getBean(InternalAdminSecurityProperties.class);
+
+                    assertThat(properties.enabled()).isFalse();
+                });
+    }
+
+    @Test
     void rejectsMissingHeaderName() {
         contextRunner.run(context -> assertThat(context).hasFailed());
     }

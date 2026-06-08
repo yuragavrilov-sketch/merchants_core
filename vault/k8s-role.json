@@ -1,0 +1,6 @@
+{
+  "bound_service_account_names": "merchants-core",
+  "bound_service_account_namespaces": "test",
+  "policies": "merchants-core-test",
+  "ttl": "1h"
+}

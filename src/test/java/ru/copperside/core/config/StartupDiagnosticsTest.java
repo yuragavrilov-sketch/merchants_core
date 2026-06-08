@@ -6,6 +6,8 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.mock.env.MockEnvironment;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(OutputCaptureExtension.class)
@@ -24,7 +26,7 @@ class StartupDiagnosticsTest {
                 .withProperty("spring.datasource.hikari.maximum-pool-size", "7");
 
         InternalAdminSecurityProperties properties =
-                new InternalAdminSecurityProperties("super-secret-token", "X-Internal-Admin-Key");
+                new InternalAdminSecurityProperties("super-secret-token", Map.of(), "X-Internal-Admin-Key");
 
         new StartupDiagnostics(environment, properties).logConfiguration();
 
