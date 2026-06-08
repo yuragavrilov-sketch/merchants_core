@@ -39,6 +39,16 @@ SPRING_CONFIG_IMPORT=configserver:${CONFIG_SERVER_URL},vault://
 
 No `bootstrap.yml` is used.
 
+### Oracle NLS character set (corp deployment)
+
+The corporate (TKB) test Oracle runs the **CL8MSWIN1251** (Windows-1251 / Cyrillic)
+character set. The thin `ojdbc11` driver bundles only a minimal charset set and
+throws `ORA-17056: Non-supported character set` when it reads result metadata
+against such a database. The runtime dependency `com.oracle.database.nls:orai18n`
+ships the NLS charset data and is therefore required in this contour. The bug is
+**runtime-only** and invisible locally (Oracle XE runs `AL32UTF8`). Any new Spring
+service that connects to this Oracle must include `orai18n`.
+
 ## Run
 
 ### Docker Compose contour
