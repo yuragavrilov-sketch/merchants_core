@@ -3,7 +3,7 @@
 # Компонент даёт стадии validate → test → package(Kaniko) → scan(Trivy) → deploy(manual) → smoke,
 # плюс vault_policy_validate + vault_apply (gated на наличии vault/policy.hcl).
 include:
-  - component: $CI_SERVER_FQDN/tkbpay/ci-templates/java-spring@1.1.7
+  - component: $CI_SERVER_FQDN/tkbpay/ci-templates/java-spring@1.1.8
     inputs:
       release_name: merchants-core
       with_cert: true
