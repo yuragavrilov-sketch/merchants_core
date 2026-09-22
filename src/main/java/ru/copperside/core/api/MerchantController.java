@@ -97,7 +97,7 @@ public class MerchantController {
             @RequestParam(defaultValue = "100") @Min(1) @Max(PageWindow.MAX_LIMIT) int limit,
             @Parameter(description = "Page offset (>=0)")
             @RequestParam(defaultValue = "0") @Min(0) int offset,
-            @Parameter(description = "Search in formatted id, name, derived status and mcc")
+            @Parameter(description = "Search in numeric or formatted id, name, derived status, mcc and inn")
             @RequestParam(required = false) String search,
             @Parameter(description = "Filter by derived status: active|suspended|blocked")
             @RequestParam(required = false) String status,

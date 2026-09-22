@@ -1,10 +1,13 @@
 package ru.copperside.core.api;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.nullValue;
@@ -144,6 +147,19 @@ class MerchantControllerIntegrationTest {
                 .andExpect(jsonPath("$.meta.total").value(1))
                 .andExpect(jsonPath("$.data[0].mercId").value(2))
                 .andExpect(jsonPath("$.data[0].inn").value("2222222222"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"104180", "4180", "MRC-104180", "  mrc-104180  "})
+    @Sql(statements = "INSERT INTO \"AP#MERCHANTS\" (MERCID, NAME, HIERARCHYID, INITIATOR, CIRCUIT) VALUES (104180, 'Long ID Shop', 104180, 'Long ID', 'PAY')",
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DELETE FROM \"AP#MERCHANTS\" WHERE MERCID = 104180",
+            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void adminListSupportsSearchByIdLongerThanFormattedIdWidth(String search) throws Exception {
+        mockMvc.perform(get("/api/v1/merchants/admin-list").param("search", search))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.meta.total").value(1))
+                .andExpect(jsonPath("$.data[0].mercId").value(104180));
     }
 
     @Test

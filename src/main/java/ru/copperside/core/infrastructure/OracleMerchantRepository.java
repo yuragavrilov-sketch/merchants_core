@@ -109,7 +109,8 @@ public class OracleMerchantRepository implements MerchantRepository {
             FROM proj p
             WHERE (:status IS NULL OR p.STATUS = :status)
               AND (:search IS NULL OR (
-                    LOWER('MRC-' || LPAD(TO_CHAR(p.MERCID), 5, '0')) LIKE :search
+                    TO_CHAR(p.MERCID) LIKE :search
+                    OR LOWER('MRC-' || LPAD(TO_CHAR(p.MERCID), GREATEST(5, LENGTH(TO_CHAR(p.MERCID))), '0')) LIKE :search
                     OR LOWER(p.NAME) LIKE :search
                     OR p.STATUS LIKE :search
                     OR p.MCC LIKE :search
